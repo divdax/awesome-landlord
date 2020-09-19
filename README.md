@@ -80,6 +80,43 @@ If you pass a Model instance, Landlord will use Eloquent’s `getForeignKey()` m
 
 You can add as many tenants as you need to, however Landlord will only allow **one** of each type of tenant at a time.
 
+Following is a sample middleware to implement the process of setting tenant on every request:
+
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Models\Company;
+use Closure;
+use Torzer\Awesome\Landlord\Facades\Landlord;
+
+class GlobalData
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle($request, Closure $next)
+    {
+        if (auth()->check()) {
+            if (auth()->user()->company_id) {
+                Landlord::addTenant('company_id', \auth()->user()->company_id);
+            }
+        }
+
+        return $next($request);
+    }
+}
+```
+
+
+**Removing a tenant** 
+
 To remove a tenant and stop scoping by it, simply call `removeTenant()`:
 
 ```php
@@ -174,6 +211,32 @@ Under the hood, Landlord uses Laravel's [anonymous global scopes](https://larave
 ExampleModel::withoutGlobalScope('tenant_id')->get();
 ```
 
+### Disabling Tenant
+
+If you need to disable Tenant management, call disable method:
+
+```php
+Landlord::disable();
+```
+
+To enable it again:
+
+```php
+Landlord::enable();
+```
+
+Any time you need to check if tenant is enabled, use isEnabled method:
+
+```php
+if (Landlord::isEnabled()) {
+    // disable to execute admin tasks
+    Landlord::disable();
+    ...
+    // enable again
+    Landlord::enable();
+}
+
+```
 
 ## Contributing
 
